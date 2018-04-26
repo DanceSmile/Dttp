@@ -1,0 +1,19 @@
+{
+    "name": "siyue/http",
+    "authors": [
+        {
+            "name": "cailei",
+            "email": "cailei@aprbrother.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^6.3",
+        "laravel/lumen": "^5.5"
+
+    },
+    "autoload": {
+        "psr-4": {
+            "Dancesmile\\Http\\": "src/"
+        }
+    }
+}
