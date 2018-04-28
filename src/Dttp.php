@@ -12,22 +12,26 @@ class Dttp{
     public static function  __callStatic($name, $arguments)
     {
         // TODO: Implement __callStatic() method.
+        if ($name === 'client' ){
+          $instance =  Pending::getInstance(...$arguments);
+        }
         return Pending::getInstance()->{$name}(...$arguments);
     }
 
 }
 
 class Pending{
-    public function  __construct()
+    public function  __construct(arrayy $clientOptions = [] )
     {
+        $this->clientOptions = $clientOptions;
         $this->options = [
             'http_errors' => false,
         ];
         $this->bodyFormat = "json";
     }
 
-    public static  function getInstance(){
-        return new self();
+    public static  function getInstance( array $clientOptions ){
+        return new self($clientOptions);
     }
     function buildClient(){
         return new Client();
@@ -41,11 +45,12 @@ class Pending{
         return $this->bodyFormat('form_params')->contentType('application/x-www-form-urlencoded');
     }
 
+
     /**
      *      name: (string, required) 表单字段名称
-            contents: (StreamInterface/resource/string, required) 表单元素中要使用的数据
-            headers: (array) 可选的表单元素要使用的键值对数组
-            filename: (string) 可选的作为要发送的文件名称
+      *      contents: (StreamInterface/resource/string, required) 表单元素中要使用的数据
+      *      headers: (array) 可选的表单元素要使用的键值对数组
+      *      filename: (string) 可选的作为要发送的文件名称
      * @return mixed
      */
     function asMultipart()
@@ -116,14 +121,14 @@ class Pending{
 
     function withOptions($options = []){
         return tap($this, function ($request)use($options){
-            $this->options = $this->mergeOptions($options);
+            $this->options = array_merge($this->options, $options);
         });
     }
 
     function redirect($status = false)
     {
         return tap($this, function ($request)use($status) {
-            return $this->options = array_merge_recursive($this->options, [
+            return $this->options = array_merge($this->options, [
                 'allow_redirects' => (bool)$status,
             ]);
         });
@@ -137,7 +142,7 @@ class Pending{
 
     function send($method, $url, $options){
         try{
-            return new Response($this->buildClient()->request($method, $url,$this->mergeOptions([
+            return new Response($this->buildClient($this->clientOptions)->request($method, $url,$this->mergeOptions([
                    "query" => $this->parseQueryParams($url)
                  ],$options)
             ));
@@ -148,11 +153,12 @@ class Pending{
     }
     function verify($status){
         return tap($this,function ($request)use($status){
-            $this->options = $this->mergeOptions([
-                "verify" => (bool)$status
-            ]);
+            $this->options = array_merge($this->options, [
+              "verify" => (bool) $status
+            ])
         });
     }
+
 
     function  mergeOptions(...$options){
         return array_merge_recursive($this->options, ...$options);
@@ -202,14 +208,20 @@ class Response {
         return $this->response->getStatusCode();
     }
 
-
-
     function __toString()
     {
         return $this->body();
 
     }
 }
+/**
+ *
+ */
+class Request
+{
+
+}
+
 
 function tap($value, $callback) {
     $callback($value);
@@ -217,5 +229,3 @@ function tap($value, $callback) {
 }
 
 class ConnectionException extends \Exception {}
-
-

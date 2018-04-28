@@ -12,7 +12,3 @@ use Dancesmile\Http;
 $response = Http::buildClient();
 
 var_dump($response);
-
-
-
-
