@@ -6,7 +6,7 @@
  * Time: 12:12
  */
 require  __DIR__."/../vendor/autoload.php";
-use Dancesmile\Http\Http;
+use Dancesmile\Http;
 
 
 $response = Http::buildClient();

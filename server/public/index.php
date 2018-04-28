@@ -10,12 +10,10 @@ $app = new Application(
 
 function build_response($request)
 {
-    return response()->json([
-        'headers' => $request->header(),
-        'query' => $request->query(),
-        'json' => $request->json()->all(),
-        'form_params' => $request->request->all(),
-    ], $request->header('Z-Status', 200));
+
+    $request = (string)$request;
+
+    return (string)$request;
 }
 $app->router->get('/get', function () {
     return build_response(app('request'));

@@ -1,106 +1,221 @@
 <?php
+
 namespace Dancesmile;
+
+
+use GuzzleHttp\Client;
+use Psr\Http\Message\RequestInterface;
+
 
 class Dttp{
 
-   public static function __callstatic($method, $argv){
-       return Pending::getInstance()->{$method}(...$argv);
-   }
+    public static function  __callStatic($name, $arguments)
+    {
+        // TODO: Implement __callStatic() method.
+        return Pending::getInstance()->{$name}(...$arguments);
+    }
 
 }
 
 class Pending{
-
-    public  static  function getInstance(...$argv){
-        return new self($argv);
+    public function  __construct()
+    {
+        $this->options = [
+            'http_errors' => false,
+        ];
+        $this->bodyFormat = "json";
     }
 
-    function buildClient()
-    {
-        return new \GuzzleHttp\Client(['handler' => $this->buildHandlerStack()]);
+    public static  function getInstance(){
+        return new self();
+    }
+    function buildClient(){
+        return new Client();
     }
 
-    function buildHandlerStack()
+    function asJson(){
+        return $this->bodyFormat('json')->contentType('application/json');
+    }
+    function asFormParams()
     {
-        return tap(\GuzzleHttp\HandlerStack::create(), function ($stack) {
-            $stack->push($this->buildBeforeSendingHandler());
+        return $this->bodyFormat('form_params')->contentType('application/x-www-form-urlencoded');
+    }
+
+    /**
+     *      name: (string, required) 表单字段名称
+            contents: (StreamInterface/resource/string, required) 表单元素中要使用的数据
+            headers: (array) 可选的表单元素要使用的键值对数组
+            filename: (string) 可选的作为要发送的文件名称
+     * @return mixed
+     */
+    function asMultipart()
+    {
+        return $this->bodyFormat('multipart');
+    }
+
+    function timeout($seconds)
+    {
+        return tap($this, function ($request) use ($seconds) {
+            $this->options['timeout'] = $seconds;
         });
     }
 
-    function buildBeforeSendingHandler()
+    function accept($header)
     {
-        return function ($handler) {
-            return function ($request, $options) use ($handler) {
-                return $handler($this->runBeforeSendingCallbacks($request), $options);
-            };
-        };
+        return $this->withHeaders(['Accept' => $header]);
     }
 
-    public function request($request, $uri){
-        rturn ($this->buildClient())->request($request, $uri);
-    }
+    function get($url, $queryParams = []){
 
-    public function createRequest(){
+        return $this->send("GET", $url, [
+           "query" => $queryParams
+        ]);
 
     }
 
-    function send($method, $url, $options)
+    function post($url, $params = [] ){
+        return $this->send("POST",$url,[
+            $this->bodyFormat => $params
+        ]);
+    }
+
+    function patch($url, $params = [])
     {
-        try {
-            return new ZttpResponse($this->buildClient()->request($method, $url, $this->mergeOptions([
-                'query' => $this->parseQueryParams($url),
-            ], $options)));
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        return $this->send('PATCH', $url, [
+            $this->bodyFormat => $params,
+        ]);
+    }
+
+    function put($url, $params = [])
+    {
+        return $this->send('PUT', $url, [
+            $this->bodyFormat => $params,
+        ]);
+    }
+
+    function delete($url, $params = [])
+    {
+        return $this->send('DELETE', $url, [
+            $this->bodyFormat => $params,
+        ]);
+    }
+
+    function contentType($contentType)
+    {
+        return $this->withHeaders(['Content-Type' => $contentType]);
+    }
+
+
+    function withHeaders($headers = []){
+        return tap($this,function($request)use($headers){
+            $this->options = $this->mergeOptions([
+                "headers" => $headers
+            ]);
+        });
+    }
+
+    function withOptions($options = []){
+        return tap($this, function ($request)use($options){
+            $this->options = $this->mergeOptions($options);
+        });
+    }
+
+    function redirect($status = false)
+    {
+        return tap($this, function ($request)use($status) {
+            return $this->options = array_merge_recursive($this->options, [
+                'allow_redirects' => (bool)$status,
+            ]);
+        });
+    }
+
+    function bodyFormat ($format){
+        return tap($this,function ($request)use($format){
+            $this->bodyFormat = $format;
+        });
+    }
+
+    function send($method, $url, $options){
+        try{
+            return new Response($this->buildClient()->request($method, $url,$this->mergeOptions([
+                   "query" => $this->parseQueryParams($url)
+                 ],$options)
+            ));
+        }catch (\GuzzleHttp\Exception\ConnectException $e) {
             throw new ConnectionException($e->getMessage(), 0, $e);
         }
+
+    }
+    function verify($status){
+        return tap($this,function ($request)use($status){
+            $this->options = $this->mergeOptions([
+                "verify" => (bool)$status
+            ]);
+        });
     }
 
+    function  mergeOptions(...$options){
+        return array_merge_recursive($this->options, ...$options);
+    }
+
+    function parseQueryParams($url)
+    {
+        return tap([], function (&$query) use ($url) {
+            parse_str(parse_url($url, PHP_URL_QUERY), $query);
+        });
+    }
 }
 
+class Response {
 
-class Response{
-
-    protected  $response;
-    public function __construct($response)
+    function __construct(\GuzzleHttp\Psr7\Response $response)
     {
         $this->response = $response;
     }
-
-    public function body(){
+    function body(){
         return (string)$this->response->getBody();
     }
-
-}
-
-class Request{
-
-    public function __construct($request)
+    function headers()
     {
-        $this->request = $request;
+        return collect($this->response->getHeaders())->mapWithKeys(function ($v, $k) {
+            return [$k => $v[0]];
+        })->all();
     }
 
-    public function url(){
-        return (string)$this->request->getUri();
+    function header($header){
+        return $this->response->getHeaderLine($header);
     }
 
-    public function body(){
-        return (string)$this->request->getBody();
+    function json()
+    {
+        return json_decode($this->response->getBody(), true);
     }
 
-    public function method(){
-        return $this->request->getMethod();
+    function __call($name, $arguments)
+    {
+        // TODO: Implement __call() method.
+        return $this->response->{$name}($arguments);
     }
 
-    public function headers(){
+    function status()
+    {
+        return $this->response->getStatusCode();
+    }
 
+
+
+    function __toString()
+    {
+        return $this->body();
 
     }
 }
 
-function tap($value,callable $callback) {
-    call_user_func($callback, $value);
+function tap($value, $callback) {
+    $callback($value);
     return $value;
-
 }
+
+class ConnectionException extends \Exception {}
 
 

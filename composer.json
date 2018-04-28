@@ -8,12 +8,17 @@
     ],
     "require": {
         "guzzlehttp/guzzle": "^6.3",
-        "laravel/lumen": "^5.5"
+        "laravel/lumen": "^5.5",
+        "phpunit/phpunit": "^7.0",
+        "kitetail/zttp": "^0.3.0"
+
+    },
+    "require-dev": {
 
     },
     "autoload": {
         "psr-4": {
-            "Dancesmile\\Http\\": "src/"
+            "Dancesmile\\": "src/"
         }
     }
 }
