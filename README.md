@@ -25,7 +25,7 @@ $response = Dttp::patch("http://localhost:9090/patch");
 
  ```
 
- #### 多个域名子链接访问
+ ####  单个域名多个子链接访问
 
 ```php
 $client = Dttp::client(["base_uri" => "http://localhost:9090"]);
@@ -103,10 +103,8 @@ $headers = $response->headers();
 #### 请求前置操作
 
 ```php
-Dttp::client("/get")->beforeSending(function($resquest, $option){
-
+Dttp::client("http://localhost:9090")->beforeSending(function($resquest, $option){
    //user code
-
 })->get("/get")->json();
 
 ```
