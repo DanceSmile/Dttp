@@ -2,169 +2,282 @@
 
 namespace Dancesmile;
 
-
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Client;
+
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-
-class Dttp{
-
-    public static function  __callStatic($name, $arguments)
+class Dttp
+{
+    public static function __callStatic($name, $arguments)
     {
         // TODO: Implement __callStatic() method.
-        if ($name === 'client' ){
-          $instance =  Pending::getInstance(...$arguments);
+        if ($name === 'client') {
+            return  Pending::getInstance(...$arguments);
         }
         return Pending::getInstance()->{$name}(...$arguments);
     }
-
 }
 
-class Pending{
-    public function  __construct(arrayy $clientOptions = [] )
+class Pending
+{
+    /**
+     * init clinet options
+     * @param array
+     */
+    public function __construct(array $clientOptions)
     {
         $this->clientOptions = $clientOptions;
         $this->options = [
             'http_errors' => false,
         ];
         $this->bodyFormat = "json";
+
+        $this->beforeSendingCallbacks = [];
+
+        $this->middlewares = [];
+
+        $this->middlewares["before"] = function(callable $handler){
+            return function($request, array $options)use($handler){
+                $this->runBeforeCallbacks($request, $options);
+                return $handler($request, $options);
+            };
+        };
+
+        $this->middlewares["after"] = function(callable $handler){
+            return function($request, array $options)use($handler){
+                $promise = $handler($request, $options);
+                return $promise->then(
+                    function (ResponseInterface $response) {
+                        return $response;
+                    }
+                );
+            };
+        };
+
     }
 
-    public static  function getInstance( array $clientOptions ){
+    /**
+     *  请求之前动作
+     */
+    public function  beforeSending(callable $callback ){
+
+        return tap($this,function() use($callback) {
+
+             $this->beforeSendingCallbacks[] = $callback;
+
+        });
+
+    }
+
+    private function runBeforeCallbacks( $request, $options)
+    {
+
+        foreach ($this->beforeSendingCallbacks as $callback) {
+
+            call_user_func($callback,new Request($request), $options);
+            
+        }
+
+        
+    }
+
+
+
+    public static function getInstance(array $clientOptions = [])
+    {
         return new self($clientOptions);
     }
-    function buildClient(){
-        return new Client();
+
+    /**
+     * 创建请求处理器
+     * @return [type]
+     */
+    public function buildClient()
+    {
+        $stack = HandlerStack::create();
+
+        $this->clientOptions['handler'] = $stack;
+
+
+        foreach ($this->middlewares as $name => $middleware) {
+
+            $stack->push($middleware);
+            
+        }
+
+        return new Client($this->clientOptions);
     }
 
-    function asJson(){
+    /**
+     * 请求数据类型
+     */
+    
+    public function asString()
+    {
+        return $this->bodyFormat('body');
+    }
+
+    public function asJson()
+    {
         return $this->bodyFormat('json')->contentType('application/json');
     }
-    function asFormParams()
+    public function asFormParams()
     {
         return $this->bodyFormat('form_params')->contentType('application/x-www-form-urlencoded');
     }
 
-
-    /**
-     *      name: (string, required) 表单字段名称
-      *      contents: (StreamInterface/resource/string, required) 表单元素中要使用的数据
-      *      headers: (array) 可选的表单元素要使用的键值对数组
-      *      filename: (string) 可选的作为要发送的文件名称
-     * @return mixed
-     */
-    function asMultipart()
+    public function asMultipart()
     {
         return $this->bodyFormat('multipart');
     }
 
-    function timeout($seconds)
+    public function bodyFormat($format)
+    {
+        return tap($this, function ($request) use ($format) {
+            $this->bodyFormat = $format;
+        });
+    }
+
+
+
+
+    /**
+     * 设置属性
+     */
+    public function timeout($seconds)
     {
         return tap($this, function ($request) use ($seconds) {
             $this->options['timeout'] = $seconds;
         });
     }
 
-    function accept($header)
+    public function redirect($status = false)
     {
-        return $this->withHeaders(['Accept' => $header]);
-    }
-
-    function get($url, $queryParams = []){
-
-        return $this->send("GET", $url, [
-           "query" => $queryParams
-        ]);
-
-    }
-
-    function post($url, $params = [] ){
-        return $this->send("POST",$url,[
-            $this->bodyFormat => $params
-        ]);
-    }
-
-    function patch($url, $params = [])
-    {
-        return $this->send('PATCH', $url, [
-            $this->bodyFormat => $params,
-        ]);
-    }
-
-    function put($url, $params = [])
-    {
-        return $this->send('PUT', $url, [
-            $this->bodyFormat => $params,
-        ]);
-    }
-
-    function delete($url, $params = [])
-    {
-        return $this->send('DELETE', $url, [
-            $this->bodyFormat => $params,
-        ]);
-    }
-
-    function contentType($contentType)
-    {
-        return $this->withHeaders(['Content-Type' => $contentType]);
-    }
-
-
-    function withHeaders($headers = []){
-        return tap($this,function($request)use($headers){
-            $this->options = $this->mergeOptions([
-                "headers" => $headers
-            ]);
-        });
-    }
-
-    function withOptions($options = []){
-        return tap($this, function ($request)use($options){
-            $this->options = array_merge($this->options, $options);
-        });
-    }
-
-    function redirect($status = false)
-    {
-        return tap($this, function ($request)use($status) {
+        return tap($this, function ($request) use ($status) {
             return $this->options = array_merge($this->options, [
                 'allow_redirects' => (bool)$status,
             ]);
         });
     }
 
-    function bodyFormat ($format){
-        return tap($this,function ($request)use($format){
-            $this->bodyFormat = $format;
+    public function verify($status)
+    {
+        return tap($this, function ($request) use ($status) {
+            return $this->options = array_merge($this->options, [
+              "verify" => (bool) $status
+            ]);
         });
     }
 
-    function send($method, $url, $options){
-        try{
-            return new Response($this->buildClient($this->clientOptions)->request($method, $url,$this->mergeOptions([
+
+
+
+    public function accept($header)
+    {
+        return $this->withHeaders(['Accept' => $header]);
+    }
+
+    public function contentType($contentType)
+    {
+        return $this->withHeaders(['Content-Type' => $contentType]);
+    }
+
+
+    public function withHeaders($headers = [])
+    {
+        return tap($this, function ($request) use ($headers) {
+            $this->options = $this->mergeOptions([
+                "headers" => $headers
+            ]);
+        });
+    }
+
+    public function withOptions($options = [])
+    {
+        return tap($this, function ($request) use ($options) {
+            $this->options = array_merge($this->options, $options);
+        });
+    }
+
+    
+
+
+
+
+    
+
+    /**
+     *  基础请求
+     *
+     */
+    
+    public function get($url, $queryParams = [])
+    {
+        return $this->send("GET", $url, [
+           "query" => $queryParams
+        ]);
+    }
+
+    public function post($url, $params = [])
+    {
+        return $this->send("POST", $url, [
+            $this->bodyFormat => $params
+        ]);
+    }
+
+    public function patch($url, $params = [])
+    {
+        return $this->send('PATCH', $url, [
+            $this->bodyFormat => $params,
+        ]);
+    }
+
+    public function put($url, $params = [])
+    {
+        return $this->send('PUT', $url, [
+            $this->bodyFormat => $params,
+        ]);
+    }
+
+    public function delete($url, $params = [])
+    {
+        return $this->send('DELETE', $url, [
+            $this->bodyFormat => $params,
+        ]);
+    }
+
+
+
+
+    /**
+     * 发送请求
+     */
+
+    private function send($method, $url, $options)
+    {
+        try {
+            return new Response($this->buildClient()->request(
+                $method,
+                $url,
+                $this->mergeOptions([
                    "query" => $this->parseQueryParams($url)
-                 ],$options)
+                 ], $options)
             ));
-        }catch (\GuzzleHttp\Exception\ConnectException $e) {
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
             throw new ConnectionException($e->getMessage(), 0, $e);
         }
-
     }
-    function verify($status){
-        return tap($this,function ($request)use($status){
-            $this->options = array_merge($this->options, [
-              "verify" => (bool) $status
-            ])
-        });
-    }
+    
 
 
-    function  mergeOptions(...$options){
+    private function mergeOptions(...$options)
+    {
         return array_merge_recursive($this->options, ...$options);
     }
 
-    function parseQueryParams($url)
+    private function parseQueryParams($url)
     {
         return tap([], function (&$query) use ($url) {
             parse_str(parse_url($url, PHP_URL_QUERY), $query);
@@ -172,46 +285,47 @@ class Pending{
     }
 }
 
-class Response {
-
-    function __construct(\GuzzleHttp\Psr7\Response $response)
+class Response
+{
+    public function __construct(\GuzzleHttp\Psr7\Response $response)
     {
         $this->response = $response;
     }
-    function body(){
+    public function body()
+    {
         return (string)$this->response->getBody();
     }
-    function headers()
+    public function headers()
     {
         return collect($this->response->getHeaders())->mapWithKeys(function ($v, $k) {
             return [$k => $v[0]];
         })->all();
     }
 
-    function header($header){
+    public function header($header)
+    {
         return $this->response->getHeaderLine($header);
     }
 
-    function json()
+    public function json()
     {
         return json_decode($this->response->getBody(), true);
     }
 
-    function __call($name, $arguments)
+    public function __call($name, $arguments)
     {
         // TODO: Implement __call() method.
-        return $this->response->{$name}($arguments);
+        return call_user_func_array([$this->response,$name], $arguments);
     }
 
-    function status()
+    public function status()
     {
         return $this->response->getStatusCode();
     }
 
-    function __toString()
+    public function __toString()
     {
         return $this->body();
-
     }
 }
 /**
@@ -220,12 +334,31 @@ class Response {
 class Request
 {
 
+    public function __construct(RequestInterface $request)
+    {
+        $this->request = $request;
+    }
+
+    public function  header($name)
+    {
+
+        return $this->request->getHeaderLine($name);
+        
+    }
+
+    public function __call($name, $arguments)
+    {
+        return call_user_func_array([$this->request,$name], $arguments);
+    }
 }
 
 
-function tap($value, $callback) {
+function tap($value, $callback)
+{
     $callback($value);
     return $value;
 }
 
-class ConnectionException extends \Exception {}
+class ConnectionException extends \Exception
+{
+}
