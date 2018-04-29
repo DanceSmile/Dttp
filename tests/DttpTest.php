@@ -19,9 +19,12 @@ class DttpTest extends TestCase
      */
     protected function setUp()
     {
+         DttpServer::start();
         $this->client =  \Dancesmile\Dttp::client([
             "base_uri" => "http://localhost:9090"
         ]);
+
+
     }
 
    
@@ -296,4 +299,19 @@ class DttpTest extends TestCase
 
     }
 
+}
+
+
+class DttpServer
+{
+    static function start()
+    {
+        $pid = exec('php -S ' . 'localhost:9090' . ' -t ./server/public > /dev/null 2>&1 & echo $!');
+        while (@file_get_contents('http://localhost:9090'. '/get') === false) {
+            usleep(1000);
+        }
+        register_shutdown_function(function () use ($pid) {
+            exec('kill ' . $pid);
+        });
+    }
 }

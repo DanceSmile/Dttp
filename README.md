@@ -1,9 +1,14 @@
 
-## usage
+[![Build Status](https://travis-ci.org/DanceSmile/http.svg?branch=master)](https://travis-ci.org/DanceSmile/http)
 
-### 请求方式
+## usage
+---
+基本使用
+
 
 #### 单个请求直接访问
+
+---
 
 ```php
 // get request  http://localhost:9090/get?param1=1uery1&param2=query2
@@ -42,6 +47,7 @@ $response = $client->post("/post",[
 ```
 
 ### 响应返回 response
+---
 
 ```php
 $response = Dttp::post("http://localhost:9090/post",[
@@ -56,6 +62,7 @@ $headers = $response->headers();
 ```
 
 ### 提交数据
+---
 
 ```php
  Dttp::asJson()->post("http://localhost:9090/post",[
@@ -78,6 +85,7 @@ $headers = $response->headers();
 ```
 
 ### 属性设置
+---
 
 ```php
  $client = Dttp::asJson()->withHeaders([
@@ -101,6 +109,7 @@ $headers = $response->headers();
 ```
 
 #### 请求前置操作
+---
 
 ```php
 Dttp::client("http://localhost:9090")->beforeSending(function($resquest, $option){
