@@ -11,12 +11,12 @@ $response = Dttp::get("http://localhost:9090/get",[
 	"param1" => "query1",
 	"param2" => "query2"
 ]);
-// post  request http://localhost:9090/post and post www-form-urlencode data `username=username`
+// post request http://localhost:9090/post and post www-form-urlencode data `username=username`
 $response = Dttp::post("http://localhost:9090/post",[
 	"username" => "username"
 ]);
 
-//  delete request 
+// delete request 
 $response = Dttp::delete("http://localhost:9090/delete");
 // put request 
 $response = Dttp::put("http://localhost:9090/put");
@@ -102,7 +102,7 @@ $headers = $response->headers();
 
 #### 请求前置操作
 
-```
+```php
 Dttp::client("/get")->beforeSending(function($resquest, $option){
 
    //user code
