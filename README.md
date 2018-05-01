@@ -1,6 +1,5 @@
-<h1 align="center">Dttp client</h1>
+<h1 align="center">Http client for human</h1>
 
-<p align="center">http client for human</p>
 
 [![Build Status](https://travis-ci.org/DanceSmile/http.svg?branch=master)](https://travis-ci.org/DanceSmile/http)
 [![License](https://poser.pugx.org/dancesmile/dttp/license)](https://packagist.org/packages/dancesmile/dttp)
@@ -114,9 +113,10 @@ $headers = $response->headers();
 
 ```php
 Dttp::client("http://localhost:9090")->beforeSending(function($resquest, $option){
-   //user code
-})->get("/get")->json();
 
+   //user code
+
+})->get("/get")->json();
 ```
 
 
