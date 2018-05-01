@@ -1,20 +1,24 @@
 {
-    "name": "siyue/http",
+    "name": "dancesmile/dttp",
     "authors": [
         {
             "name": "cailei",
-            "email": "cailei@aprbrother.com"
+            "email": "1215850394@qq.com"
         }
     ],
+    "keywords": [
+        "http",
+        "request",
+        "human http client"
+
+    ],
+    "license": "MIT",
     "require": {
         "guzzlehttp/guzzle": "^6.3",
         "laravel/lumen": "^5.5",
-        "phpunit/phpunit": "^7.0",
-        "kitetail/zttp": "^0.3.0"
-
     },
     "require-dev": {
-
+         "phpunit/phpunit": "^7.0"
     },
     "autoload": {
         "psr-4": {
