@@ -1,9 +1,17 @@
 
 [![Build Status](https://travis-ci.org/DanceSmile/http.svg?branch=master)](https://travis-ci.org/DanceSmile/http)
 
+[![License](https://poser.pugx.org/dancesmile/dttp/license)](https://packagist.org/packages/dancesmile/dttp)
 
+[![Latest Unstable Version](https://poser.pugx.org/dancesmile/dttp/v/unstable)](//packagist.org/packages/dancesmile/dttp)
+[![Latest Stable Version](https://poser.pugx.org/dancesmile/dttp/version)](https://packagist.org/packages/dancesmile/dttp)
 
-##单个请求直接访问
+## 安装
+```
+composer require dancesmile/dttp
+```
+
+## 单个请求直接访问
 
 
 ```php
