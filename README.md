@@ -14,6 +14,9 @@ composer require dancesmile/dttp
 
 
 ```php
+<?php 
+use Dancesmile\Dttp;
+
 // get request  http://localhost:9090/get?param1=1uery1&param2=query2
 $response = Dttp::get("http://localhost:9090/get",[
 	"param1" => "query1",
@@ -36,6 +39,9 @@ $response = Dttp::patch("http://localhost:9090/patch");
 ## 单个域名多个子链接访问
 
 ```php
+<?php
+use Dancesmile\Dttp;
+
 $client = Dttp::client(["base_uri" => "http://localhost:9090"]);
 // get request  http://localhost:9090/get?param1=1uery1&param2=query2
 $response = $client->get("/get",[
@@ -52,6 +58,9 @@ $response = $client->post("/post",[
 ## 响应返回 response
 
 ```php
+<?php
+use Dancesmile\Dttp;
+
 $response = Dttp::post("http://localhost:9090/post",[
 	"username" => "username"
 ]);
@@ -66,6 +75,9 @@ $headers = $response->headers();
 ## 提交数据
 
 ```php
+<?php
+use Dancesmile\Dttp;
+
  Dttp::asJson()->post("http://localhost:9090/post",[
 	"username" => "username"
  ]);
@@ -88,6 +100,9 @@ $headers = $response->headers();
 ## 属性设置
 
 ```php
+<?php
+use Dancesmile\Dttp;
+
  $client = Dttp::asJson()->withHeaders([
  	"dttp-version" => 1.0
  ]);
@@ -108,13 +123,42 @@ $headers = $response->headers();
 
 ```
 
+### 中间件
+```php
+use Dancesmile\Dttp;
+<!-- 前置中间件 -->
+Dttp::addMiddware("test",function($request, array $options)use($handler)
+{
+    $this->runBeforeCallbacks($request, $options);
+    return $handler($request, $options);
+})->post("http://localhost:9090/post",[
+	"username" => "username"
+ ]);
+
+ <!-- 后置中间件 -->
+Dttp::addMiddware("test",function($request, array $options)use($handler){
+    $promise = $handler($request, $options);
+    return $promise->then(
+        function (ResponseInterface $response) {
+            return $response;
+        }
+    );
+})->post("http://localhost:9090/post",[
+	"username" => "username"
+ ]);
+
+```
+
 ## 请求前置操作
 
 ```php
+<?php
+use Dancesmile\Dttp;
+
 Dttp::client("http://localhost:9090")->beforeSending(function($resquest, $option){
 
    //user code
-
+   
 })->get("/get")->json();
 ```
 

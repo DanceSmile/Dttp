@@ -58,6 +58,15 @@ class Pending
 
     }
 
+    public function addMiddware($name, callable $callback)
+    {
+        if($name === "before" || $name === "after") throw new ConnectionException("$name is system used !", 1);
+        
+         $this->middlewares[$name] = function(callable $handler){
+            return $callback;
+        };
+    }
+
     /**
      *  请求之前动作
      */
