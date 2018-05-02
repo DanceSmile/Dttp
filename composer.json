@@ -12,7 +12,7 @@
         "request",
         "human http client"
     ],
-    "minimum-stability":true,
+    "minimum-stability":"v1.0.0",
     "prefer-stable": true,
     "license": "MIT",
     "require": {
