@@ -1,7 +1,6 @@
 <h1 align="center">Http client for human</h1>
 
-
-[![Build Status](https://travis-ci.org/DanceSmile/http.svg?branch=master)](https://travis-ci.org/DanceSmile/http)
+[![Build Status](https://travis-ci.org/DanceSmile/Dttp.svg?branch=master)](https://travis-ci.org/DanceSmile/Dttp)
 [![License](https://poser.pugx.org/dancesmile/dttp/license)](https://packagist.org/packages/dancesmile/dttp)
 [![Latest Unstable Version](https://poser.pugx.org/dancesmile/dttp/v/unstable)](//packagist.org/packages/dancesmile/dttp)
 [![Latest Stable Version](https://poser.pugx.org/dancesmile/dttp/version)](https://packagist.org/packages/dancesmile/dttp)
