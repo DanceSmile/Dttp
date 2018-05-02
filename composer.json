@@ -12,6 +12,8 @@
         "request",
         "human http client"
     ],
+    "minimum-stability":true,
+    "prefer-stable": true,
     "license": "MIT",
     "require": {
         "guzzlehttp/guzzle": "^6.3",
