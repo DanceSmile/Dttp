@@ -7,6 +7,11 @@ use GuzzleHttp\Client;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Cookie\CookieJarInterface;
+
+
+
+
 
 class Dttp
 {
@@ -34,6 +39,8 @@ class Pending
         ];
         $this->bodyFormat = "json";
 
+        $this->jar = new \GuzzleHttp\Cookie\CookieJar();
+
         $this->beforeSendingCallbacks = [];
 
         $this->middlewares = [];
@@ -58,13 +65,23 @@ class Pending
 
     }
 
-    public function addMiddware($name, callable $callback)
+    public function addMiddleware($name, callable $callback)
     {
         if($name === "before" || $name === "after") throw new ConnectionException("$name is system used !", 1);
-        
-         $this->middlewares[$name] = function(callable $handler){
-            return $callback;
-        };
+        return  tap($this,function ()use($name, $callback)
+         {
+             $this->middlewares[$name] = $callback;
+         });
+
+    }
+
+    // 带cookie
+    public function withCookie($cookies,$domain)
+    {
+        return tap($this, function () use ($cookies, $domain)
+        {
+            $this->jar->fromArray($cookies, $domain);
+        });
     }
 
     /**
@@ -73,20 +90,15 @@ class Pending
     public function  beforeSending(callable $callback ){
 
         return tap($this,function() use($callback) {
-
              $this->beforeSendingCallbacks[] = $callback;
-
         });
-
     }
 
     private function runBeforeCallbacks( $request, $options)
     {
 
         foreach ($this->beforeSendingCallbacks as $callback) {
-
-            call_user_func($callback,new Request($request), $options);
-            
+            call_user_func($callback, $request, $options);
         }
 
         
@@ -171,7 +183,7 @@ class Pending
         });
     }
 
-    public function verify($status)
+    public function verify( $status = true)
     {
         return tap($this, function ($request) use ($status) {
             return $this->options = array_merge($this->options, [
@@ -271,7 +283,8 @@ class Pending
                 $method,
                 $url,
                 $this->mergeOptions([
-                   "query" => $this->parseQueryParams($url)
+                   "query" => $this->parseQueryParams($url),
+                   "cookies" => $this->jar
                  ], $options)
             ));
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
