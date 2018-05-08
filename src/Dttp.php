@@ -39,7 +39,7 @@ class Pending
         ];
         $this->bodyFormat = "json";
 
-        $this->jar = new \GuzzleHttp\Cookie\CookieJar();
+        $this->jar = new \GuzzleHttp\Cookie\CookieJar(false, [["name" => "cailei"]]);
 
         $this->beforeSendingCallbacks = [];
 

@@ -51,7 +51,7 @@ class DttpTest extends TestCase
 
         $response = $this->client->asString()->beforeSending(function($resquest, $option){
 
-            $this->assertEquals("", $resquest->header("content-type"));
+            $this->assertEquals("", $resquest->getHeaderLine("content-type"));
 
         })->post("/post","yu");
 
@@ -68,7 +68,7 @@ class DttpTest extends TestCase
     {
         $response = $this->client->asJson()->beforeSending(function($resquest, $option){
 
-            $this->assertContains("application/json", $resquest->header("content-type"));
+            $this->assertContains("application/json", $resquest->getHeaderLine("content-type"));
 
         })->post("/post",[
                 "name" => "name" ,
@@ -87,7 +87,7 @@ class DttpTest extends TestCase
          $response = $this->client->asFormParams()->beforeSending(function($resquest, $option){
 
 
-            $this->assertContains("application/x-www-form-urlencoded", $resquest->header("content-type"));
+            $this->assertContains("application/x-www-form-urlencoded", $resquest->getHeaderLine("content-type"));
 
         })->post("/post",[
                 "name" => "name" ,
@@ -106,7 +106,7 @@ class DttpTest extends TestCase
 
         $response = $this->client->asMultipart()->beforeSending(function($resquest, $option){
 
-            $this->assertContains("multipart/form-data", $resquest->header("content-type"));
+            $this->assertContains("multipart/form-data", $resquest->getHeaderLine("content-type"));
 
         })->post("/post",[
             [
@@ -158,7 +158,7 @@ class DttpTest extends TestCase
 
         $response = $this->client->accept("dttp")->beforeSending(function($resquest, $option){
 
-            $this->assertEquals($resquest->header("accept"),"dttp");
+            $this->assertEquals($resquest->getHeaderLine("accept"),"dttp");
 
         })->get("/get")->json();
         
@@ -173,7 +173,7 @@ class DttpTest extends TestCase
         $response = $this->client->contentType("text/html")->beforeSending(function($resquest, $option){
 
 
-            $this->assertEquals($resquest->header("Content-Type"),"text/html");
+            $this->assertEquals($resquest->getHeaderLine("Content-Type"),"text/html");
 
         })->get("/get")->json();
 

@@ -13,10 +13,9 @@ $response = Dttp::addMiddleware("test",function ($handler)
 		$request = $request->withHeader("cailei","test");
 		return $handler($request, $option);
 	};
-})->withCookie(["cailei" => "test"],"baidu.com")->asFormParams()->addMiddleware("name",function($handler){
+})->asFormParams()->addMiddleware("name",function($handler){
 	return function ($request, $option) use ($handler)
 	{
-		var_dump($request->getHeaders());
 		$promise = $handler($request, $option);
 
 		 return $promise->then(
@@ -27,9 +26,9 @@ $response = Dttp::addMiddleware("test",function ($handler)
 	};
 })->beforeSending(function($request, $option){
 
-		var_dump($request->getHeaders());
+		var_dump($request->getBody()->getContents());
 
-})->post("http://baidu.com");
+})->get("http://www.baidu.com");
 
 
 
