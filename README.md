@@ -36,7 +36,7 @@ $response = Dttp::patch("http://localhost:9090/patch");
 
  ```
 
-## 单个域名多个子链接访问
+## 单个域名多个子链接访问 
 
 ```php
 <?php
