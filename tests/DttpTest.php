@@ -55,7 +55,7 @@ class DttpTest extends TestCase
 
         })->post("/post","yu");
 
-        $this->assertEquals($response->status(),2000);
+        $this->assertEquals($response->status(),200);
         
 
     }
